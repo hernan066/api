@@ -57,14 +57,15 @@ router.get("/callback", async (req, res) => {
     const expiresAt = Date.now() + expires_in * 1000; // lo pasamos a timestamp en ms
 
     // 2. Guardar rol de Usuario como 'seller'
-    await User.updateOne(
+    const res = await User.updateOne(
       { auth0Id: userId }, // el mismo que mandaste en state
       {
         role: "seller",
       }
     );
+    console.log(res);
 
-    await Seller.updateOne(
+    const res1 = await Seller.updateOne(
       { userId }, // el mismo que mandaste en state
       {
         userId,
@@ -77,7 +78,7 @@ router.get("/callback", async (req, res) => {
       },
       { upsert: true } // crea si no existe
     );
-
+    console.log(res1);
     console.log("✅ Tokens guardados en DB para usuario:", userId);
 
     // 3. Redirigir al frontend
