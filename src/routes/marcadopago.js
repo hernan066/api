@@ -2,6 +2,8 @@
 const express = require("express");
 const axios = require("axios");
 const Seller = require("../models/Seller"); // tu modelo
+const { checkJwt } = require("../middlewares/checkJwt");
+const { attachUser } = require("../middlewares/auth");
 require("dotenv").config();
 
 const router = express.Router();
@@ -10,7 +12,7 @@ const router = express.Router();
  * 1) Redirigir al vendedor a MercadoPago para autorizar
  *    state => aquí usamos userId de Auth0 para identificar al vendedor en el callback
  */
-https: router.get("/connect/:userId", (req, res) => {
+router.get("/connect/:userId", checkJwt, attachUser, (req, res) => {
   const { userId } = req.params;
   const redirectUri = process.env.MP_REDIRECT_URI; // debe coincidir con la app en MP
   const clientId = process.env.MP_CLIENT_ID;
@@ -51,7 +53,16 @@ router.get("/callback", async (req, res) => {
       }
     );
 
-    const { access_token, refresh_token, user_id } = tokenRes.data;
+    const { access_token, refresh_token, user_id, expires_in } = tokenRes.data;
+
+    const expiresAt = Date.now() + expires_in * 1000; // lo pasamos a timestamp en ms
+
+    const res = await User.updateOne(
+      { auth0Id: userId }, // el mismo que mandaste en state
+      {
+        role: "seller",
+      }
+    );
 
     // 2. Guardar en DB (ejemplo con MongoDB/Mongoose)
     await Seller.updateOne(
@@ -60,6 +71,8 @@ router.get("/callback", async (req, res) => {
         mpAccessToken: access_token,
         mpRefreshToken: refresh_token,
         mpUserId: user_id,
+        expires_at: expiresAt,
+        status: "active",
       },
       { upsert: true } // crea si no existe
     );
