@@ -12,7 +12,7 @@ const router = express.Router();
  * 1) Redirigir al vendedor a MercadoPago para autorizar
  *    state => aquí usamos userId de Auth0 para identificar al vendedor en el callback
  */
-router.get("/connect/:userId", checkJwt, attachUser, (req, res) => {
+router.get("/connect/:userId", checkJwt, (req, res) => {
   const { userId } = req.params;
   const redirectUri = process.env.MP_REDIRECT_URI; // debe coincidir con la app en MP
   const clientId = process.env.MP_CLIENT_ID;
