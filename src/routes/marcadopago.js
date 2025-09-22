@@ -2,6 +2,7 @@
 const express = require("express");
 const axios = require("axios");
 const Seller = require("../models/Seller"); // tu modelo
+const User = require("../models/User");
 require("dotenv").config();
 
 const router = express.Router();
@@ -51,15 +52,28 @@ router.get("/callback", async (req, res) => {
       }
     );
 
-    const { access_token, refresh_token, user_id } = tokenRes.data;
+    const { access_token, refresh_token, user_id, expires_in } = tokenRes.data;
 
-    // 2. Guardar en DB (ejemplo con MongoDB/Mongoose)
+    const expiresAt = Date.now() + expires_in * 1000; // lo pasamos a timestamp en ms
+
+    // 2. Guardar rol de Usuario como 'seller'
+    await User.updateOne(
+      { auth0Id: userId }, // el mismo que mandaste en state
+      {
+        role: "seller",
+      }
+    );
+
     await Seller.updateOne(
       { userId }, // el mismo que mandaste en state
       {
+        userId,
+        role: "seller",
         mpAccessToken: access_token,
         mpRefreshToken: refresh_token,
-        mpUserId: user_id,
+        mpUserId: user_id?.toString(),
+        expires_at: expiresAt,
+        status: "active",
       },
       { upsert: true } // crea si no existe
     );

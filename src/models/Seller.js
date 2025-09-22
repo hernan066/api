@@ -11,6 +11,7 @@ const SellerSchema = new mongoose.Schema({
   mpUserId: { type: String }, // lo vamos a llenar con OAuth de MercadoPago
   status: { type: String, default: "pending" }, // pending | active
   createdAt: { type: Date, default: Date.now },
+  expires_at: Number,
 });
 
 module.exports = mongoose.model("Seller", SellerSchema);
